@@ -24,7 +24,13 @@ const chatSchema = mongoose.Schema({
         type: String,
         enum: ['md', 'group'],
         default: 'md'
-    }
+    },
+    showTo: [
+        {
+            type: mongoose.SchemaTypes.ObjectId,
+            ref: 'User',
+        }
+    ]
 }, {
     timestamps: true
 })

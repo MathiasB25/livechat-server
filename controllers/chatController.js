@@ -10,7 +10,39 @@ export const getChats = async (req, res) => {
 
     try {
         const chats = await Chat.find({ users: user._id.toString() }).populate({ path: 'users', select: '_id username tag profilePhoto status bannerColor' }).select('-__v -createdAt -updatedAt');
-        return res.json(chats);
+        const chatsNotHidden = chats.filter( chat => chat.showTo.includes(user._id) );
+        return res.json(chatsNotHidden);
+    } catch (error) {
+        const catchError = new Error('Algo salió mal');
+        return res.status(404).json({ msg: catchError.message });
+    }
+}
+
+export const hideChat = async (req, res) => {
+    const user = req.user;
+    const chatId = req.body.chatId;
+
+    if(!chatId) {
+        const error = new Error('Algo salió mal');
+        return res.status(404).json({ msg: error.message });
+    }
+
+    if(!ObjectId.isValid(chatId)) {
+        const error = new Error('Id del chat no válido');
+        return res.status(404).json({ msg: error.message });
+    }
+
+    const chat = await Chat.findById(chatId);
+    if(!chat) {
+        const error = new Error('Este chat no existe');
+        return res.status(404).json({ msg: error.message });
+    }
+
+    const showTo = chat.showTo.filter(mapUser => mapUser.toString() !== user._id.toString());
+    chat.showTo = showTo;
+    try {
+        await chat.save();
+        return res.status(200).json({ msg: 'Eliminaste este chat' });
     } catch (error) {
         const catchError = new Error('Algo salió mal');
         return res.status(404).json({ msg: catchError.message });
@@ -19,6 +51,7 @@ export const getChats = async (req, res) => {
 
 export const getMessages = async (req, res) => {
     const user = req.params.user;
+    const me = req.user;
 
     if(!user) {
         const error = new Error('Algo salió mal');
@@ -40,8 +73,16 @@ export const getMessages = async (req, res) => {
     let chat = await Chat.findOne({ $or: [{ $and: [{ users: user }, { users: req.user._id.toString() }], $and: [{users: req.user._id.toString() }, { users: user }] }] }).populate({ path: 'users', select: 'username tag profilePhoto bannerColor status' }).select('-__v -createdAt -updatedAt')
     if(!chat && user !== req.user._id) {
         isChatCreated = true;
-        chat = new Chat({ users: [ user, req.user._id ] })
+        chat = new Chat({ users: [ user, req.user._id ], showTo: [ user, req.user._id ]})
         await chat.save();
+    }
+
+    const userIsInChat = chat.users.filter( user => user._id.toString() === me._id.toString() );
+    if(userIsInChat.length !== 0 && !chat.showTo.includes(me._id.toString())) {
+        isChatCreated = true;
+        const showTo = chat.showTo.concat(me._id);
+        chat.showTo = showTo;
+        chat.save();
     }
 
     if( chat.lastMessages.from && chat.lastMessages.from.toString() !== req.user._id.toString() ) {
