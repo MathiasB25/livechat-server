@@ -61,13 +61,31 @@ io.on('connection', (socket) => {
 
     socket.on('joinGlobal', () => {
         socket.join('global');
-        console.log('user joined')
     });
 
     socket.on('sendMessage', (message) => {
         // io.to('global').timeout(5000).emit("receiveMessage", message);
         socket.broadcast.timeout(5000).emit("receiveMessage", message);
-        console.log(message);
+    });
+
+    socket.on('userChangeStatus', (friend) => {
+        socket.broadcast.timeout(5000).emit("userChangeStatus", friend);
+    });
+
+    socket.on('sendFriendRequest', (request) => {
+        socket.broadcast.timeout(5000).emit("receiveFriendRequest", request);
+    });
+
+    socket.on('acceptFriendRequest', (request) => {
+        socket.broadcast.timeout(5000).emit("acceptedFriendRequest", request);
+    });
+
+    socket.on('cancelFriendRequest', (request) => {
+        socket.broadcast.timeout(5000).emit("canceledFriendRequest", request);
+    });
+
+    socket.on('deleteFriend', (users) => {
+        socket.broadcast.timeout(5000).emit("deleteFriend", users);
     });
 
     socket.on('disconnect', function () {

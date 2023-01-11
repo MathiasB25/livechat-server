@@ -313,7 +313,6 @@ export const changeProfileImage_ = async (req, res) => {
 
 export const changeStatus = async (req, res) => {
     const status = req.body.status;
-    console.log(status)
 
     if(!status) {
         const error = new Error('Algo salió mal');
@@ -390,7 +389,7 @@ export const addFriend = async (req, res) => {
         return res.status(404).json({ msg: error.message })
     }
 
-    const userExists = await User.findOne({ username, tag }).select('username tag profilePhoto friends');
+    const userExists = await User.findOne({ username, tag }).select('username tag profilePhoto friends status bannerColor');
     if(!userExists) {
         const error = new Error('Este usuario no existe')
         return res.status(404).json({ msg: error.message })

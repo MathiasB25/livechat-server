@@ -19,6 +19,11 @@ const chatSchema = mongoose.Schema({
                 ref: 'ChatMessage',
             }
         ],
+    },
+    chatType: {
+        type: String,
+        enum: ['md', 'group'],
+        default: 'md'
     }
 }, {
     timestamps: true

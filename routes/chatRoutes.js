@@ -1,5 +1,5 @@
 import express from 'express'
-import { getChats, getMessages, createMessage, updateMessage, deleteMessage } from '../controllers/chatController.js'
+import { getChats, getMessages, createMessage, updateMessage, deleteMessage, setMessagesRead } from '../controllers/chatController.js'
 import checkAuth from '../middleware/checkAuth.js'
 
 const router = express.Router()
@@ -11,5 +11,6 @@ router.route('/messages')
     .post( checkAuth, createMessage )
     .put( checkAuth, updateMessage )
     .delete( checkAuth, deleteMessage )
+router.post('/messages/read', checkAuth, setMessagesRead);
 
 export default router

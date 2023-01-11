@@ -106,3 +106,34 @@ export const updateMessage = async (req, res) => {
 export const deleteMessage = async (req, res) => {
 
 }
+
+export const setMessagesRead = async (req, res) => {
+    const chatId = req.body.chatId;
+
+    if(!chatId) {
+        const error = new Error('Debes especificar el id del chat');
+        return res.status(404).json({ msg: error.message });
+    }
+
+    if(!ObjectId.isValid(chatId)) {
+        const error = new Error('ID no válido');
+        return res.status(404).json({ msg: error.message });
+    }
+
+    const chat = await Chat.findById(chatId);
+    if(!chat) {
+        const error = new Error('Algo salió mal');
+        return res.status(404).json({ msg: error.message });
+    }
+
+    chat.lastMessages.from = null;
+    chat.lastMessages.messages = [];
+
+    try {
+        await chat.save();
+        return res.status(200).json({ msg: 'ok' });
+    } catch (error) {
+        const catchError = new Error('Algo salió mal');
+        return res.status(404).json({ msg: catchError.message });
+    }
+}
