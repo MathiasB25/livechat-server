@@ -82,19 +82,20 @@ export const getMessages = async (req, res) => {
         isChatCreated = true;
         const showTo = chat.showTo.concat(me._id);
         chat.showTo = showTo;
-        chat.save();
+        await chat.save();
     }
 
     if( chat.lastMessages.from && chat.lastMessages.from.toString() !== req.user._id.toString() ) {
         chat.lastMessages.from = null;
         chat.lastMessages.messages = [];
-        chat.save();
+        await chat.save();
     }
 
     try {
         const messages = await ChatMessage.find({ chatId: chat._id }).populate({ path: 'from', select: 'username tag profilePhoto bannerColor status' }).select('-__v -createdAt -chatId -_id');
         if(isChatCreated) {
-            return res.json({ chat, messages });
+            const getChat = await Chat.findById(chat._id).populate({ path: 'users', select: '_id username tag profilePhoto status bannerColor' }).select('-__v -createdAt -updatedAt');
+            return res.json({ chat: getChat, messages });
         } else {
             return res.json({ chat: {}, messages });
         }

@@ -16,7 +16,22 @@ import url from 'url';
 const ObjectId = mongoose.Types.ObjectId;
 export const register = async (req, res) => {
     // Check if user/email already exists
-    const { email, username } = req.body;
+    const { email, username, password } = req.body;
+
+    if(password.length < 8) {
+        const error = new Error('La contraseña debe contener mínimo 8 caracteres')
+        return res.status(400).json({ msg: error.message })
+    }
+
+    if(password.length > 32) {
+        const error = new Error('La contraseña debe contener máximo 32 caracteres')
+        return res.status(400).json({ msg: error.message })
+    }
+
+    if(!/^[A-Za-z0-9]*$/.test(username)) {
+        const error = new Error('El nombre de usuario no puede contener caracteres especiales')
+        return res.status(400).json({ msg: error.message })
+    }
 
     const emailExist = await User.findOne({ email });
     if(emailExist) {
@@ -367,7 +382,7 @@ export const changeBannerColor = async (req, res) => {
 
 export const getFriendRequests = async (req, res) => {
     try {        
-        const friendRequests = await FriendRequest.find({ $or: [{ from: req.user._id }, { to: req.user._id }] }).populate({ path: 'from', select: 'username tag profilePhoto friends' }).populate({ path: 'to', select: 'username profilePhoto friends' }).select('-__v -createdAt -updatedAt')
+        const friendRequests = await FriendRequest.find({ $or: [{ from: req.user._id }, { to: req.user._id }] }).populate({ path: 'from', select: 'username tag profilePhoto friends status bannerColor' }).populate({ path: 'to', select: 'username tag profilePhoto friends status bannerColor' }).select('-__v -createdAt -updatedAt')
         return res.status(200).json(friendRequests)
     } catch (error) {
         const catchError = new Error('Algo salió mal')

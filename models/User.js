@@ -45,7 +45,7 @@ const userSchema = mongoose.Schema({
     status: {
         type: String,
         enum: ['online', 'away', 'occupied', 'invisible', 'offline'],
-        default: 'offline'
+        default: 'online'
     },
     token: {
         type: String,
