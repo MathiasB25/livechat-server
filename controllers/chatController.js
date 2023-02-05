@@ -141,7 +141,7 @@ export const createMessage = async (req, res) => {
     try {
         await newMessage.save();
         await chat.save();
-        return res.status(200).json({ success: true });
+        return res.status(200).json({ success: true, messageId: newMessage._id });
     } catch (error) {
         const catchError = new Error('Algo salió mal');
         return res.status(404).json({ msg: catchError.message });
