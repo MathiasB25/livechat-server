@@ -9,7 +9,7 @@ export const getChats = async (req, res) => {
     const user = req.user;
 
     try {
-        const chats = await Chat.find({ users: user._id.toString() }).populate({ path: 'users', select: '_id username tag profilePhoto status bannerColor' }).select('-__v -createdAt -updatedAt');
+        const chats = await Chat.find({ users: user._id.toString() }).populate({ path: 'users', select: '_id username tag profilePhoto status bannerColor createdAt' }).select('-__v -createdAt -updatedAt');
         const chatsNotHidden = chats.filter( chat => chat.showTo.includes(user._id) );
         return res.json(chatsNotHidden);
     } catch (error) {
@@ -92,7 +92,7 @@ export const getMessages = async (req, res) => {
     }
 
     try {
-        const messages = await ChatMessage.find({ chatId: chat._id }).populate({ path: 'from', select: 'username tag profilePhoto bannerColor status' }).select('-__v -createdAt -chatId -_id');
+        const messages = await ChatMessage.find({ chatId: chat._id }).populate({ path: 'from', select: 'username tag profilePhoto bannerColor status' }).populate({ path: 'reply', select: '_id from message edited createdAt', populate: { path: 'from', select: 'username tag profilePhoto bannerColor status' } }).select('-__v -createdAt -chatId');
         if(isChatCreated) {
             const getChat = await Chat.findById(chat._id).populate({ path: 'users', select: '_id username tag profilePhoto status bannerColor' }).select('-__v -createdAt -updatedAt');
             return res.json({ chat: getChat, messages });
@@ -108,6 +108,7 @@ export const getMessages = async (req, res) => {
 export const createMessage = async (req, res) => {
     const toChat = req.body.toChat;
     const message = req.body.message;
+    const reply = req.body.reply;
     
     if(!toChat) {
         const error = new Error('El mensaje debe ser enviado a alguien');
@@ -131,6 +132,12 @@ export const createMessage = async (req, res) => {
     } else {
         chat.lastMessages.messages.push(newMessage._id);
     }
+    if(reply && ObjectId.isValid(reply)) {
+        const messageExists = await ChatMessage.findById(reply); 
+        if(messageExists) {
+            newMessage.reply = reply;
+        }
+    }
     try {
         await newMessage.save();
         await chat.save();
@@ -142,11 +149,62 @@ export const createMessage = async (req, res) => {
 }
 
 export const updateMessage = async (req, res) => {
+    const _id = req.body.message._id;
+    const newMessage = req.body.message.message;
+    
+    if(!_id) {
+        const error = new Error('El mensaje no contiene un ID');
+        return res.status(404).json({ msg: error.message });
+    }
 
+    if(!ObjectId.isValid(_id)) {
+        const error = new Error('Este mensaje no existe');
+        return res.status(404).json({ msg: error.message });
+    }
+
+    const message = await ChatMessage.findById(_id);
+    if(!message) {
+        const error = new Error('Este mensaje no existe');
+        return res.status(404).json({ msg: error.message });
+    }
+
+    try {
+        message.edited = true;
+        message.message = newMessage.toString();
+        await message.save();
+        return res.status(200).json({ msg: 'Has editado el mensaje correctamente' });
+    } catch (err) {
+        const error = new Error('Algo salió mal');
+        return res.status(404).json({ msg: error.message });
+    }
 }
 
 export const deleteMessage = async (req, res) => {
+    const _id = req.body._id;
+    
+    if(!_id) {
+        const error = new Error('El mensaje no contiene un ID');
+        return res.status(404).json({ msg: error.message });
+    }
 
+    if(!ObjectId.isValid(_id)) {
+        const error = new Error('Este mensaje no existe');
+        return res.status(404).json({ msg: error.message });
+    }
+
+    const message = await ChatMessage.findById(_id);
+    if(!message) {
+        const error = new Error('Este mensaje no existe');
+        return res.status(404).json({ msg: error.message });
+    }
+
+    try {
+        await message.remove();
+        return res.status(200).json({ msg: 'Has eliminado el mensaje correctamente' });
+    } catch (err) {
+        const error = new Error('Algo salió mal');
+        return res.status(404).json({ msg: error.message });
+    }
 }
 
 export const setMessagesRead = async (req, res) => {

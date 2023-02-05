@@ -9,8 +9,16 @@ const chatMessageSchema = mongoose.Schema({
         type: mongoose.SchemaTypes.ObjectId,
         ref: 'User'
     },
+    reply: {
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: 'ChatMessage'
+    },
     message: {
         type: String
+    },
+    edited: {
+        type: Boolean,
+        default: false
     }
 }, {
     timestamps: true

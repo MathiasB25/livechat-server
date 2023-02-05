@@ -68,6 +68,14 @@ io.on('connection', (socket) => {
         socket.broadcast.timeout(5000).emit("receiveMessage", message);
     });
 
+    socket.on('editMessage', (message) => {
+        socket.broadcast.timeout(5000).emit("editedMessage", message);
+    });
+
+    socket.on('deleteMessage', (message) => {
+        socket.broadcast.timeout(5000).emit("deletedMessage", message);
+    });
+
     socket.on('userChangeStatus', (friend) => {
         socket.broadcast.timeout(5000).emit("userChangeStatus", friend);
     });
